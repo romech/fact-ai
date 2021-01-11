@@ -2,15 +2,94 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+import torch
+import torch.nn as nn
+import numpy as np
+
 def get_real_imag_parts(x):
+    '''
+    Extracts the real and imaginary component tensors from a complex number tensor
+
+    Input:
+        x: Complex number tensor of size [b,2,c,h,w]
+    Output:
+        real component tensor of size [b,c,h,w]
+        imaginary component tensor of size [b,c,h,w]
+    '''
     assert(x.size(1) == 2) # Complex tensor has real and imaginary parts in 2nd dim 
     return x[:,0], x[:,1]
 
 def complex_norm(x):
+    '''
+    Calculates the complex norm for each complex number in a tensor
+
+    Input:
+        x: Complex number tensor of size [b,2,c,h,w]
+    Output:
+        tensor of norm values of size [b,c,h,w]
+    '''
     assert(x.size(1) == 2) # Complex tensor has real and imaginary parts in 2nd dim
     return torch.sqrt(x[:,0]**2 + x[:,1]**2)
+
+class RealToComplex(nn.Module):
+    '''
+    Converts a real value tensor a into a complex value tensor x (Eq. 2). 
+    Adds a fooling counterpart b and rotates the tensor by a random angle theta.
+    Returns theta for later decoding.
     
+    Shape:
+        Input: 
+            a: [b,c,h,w]
+            b: [b,c,h,w]
+        Output:
+            x: [b,2,c,h,w]
+            theta: [1]
+    '''
+    def __init__(self):
+        super(RealToComplex, self).__init__()
+
+    def forward(self, a, b):
+        # Randomly choose theta
+        theta = torch.FloatTensor(1).uniform_(0, 2*np.pi)
+
+        # Convert to complex and rotate by theta
+        real = a*torch.cos(theta) - b*torch.sin(theta)
+        imag = b*torch.cos(theta) + a*torch.sin(theta)
+        x = torch.stack((real, imag), dim=1)
+
+        return x, theta
+
+class Complex2Real(nn.Module):
+    '''
+    Decodes a complex value tensor h into a real value tensor y by rotating 
+    by -theta (Eq. 3). 
+
+    Shape:
+        Input:
+            h: [b,2,c,h,w]
+            theta: [1]
+        Output: [b,c,h,w] 
+    '''
+    def __init__(self):
+        super(Complex2Real, self).__init__()
+
+    def forward(self, h, theta):
+        # Apply opposite rotation to decode
+        a, b = get_real_imag_parts(h)
+        y = a*torch.cos(-theta) - b*torch.sin(-theta) # Only need real component
+        
+        return y
+  
 class ActivationComplex(nn.Module):
+    '''
+    Complex activation function from Eq. 6.
+
+    Args:
+        c: Positive constant (>0) from Eq. 6. Default: 1
+    Shape:
+        Input: [b,2,c,h,w]
+        Output: [b,2,c,h,w]
+    '''
     def __init__(self, c=1):
         super(ActivationComplex, self).__init__()
         assert(c>0)
@@ -22,6 +101,20 @@ class ActivationComplex(nn.Module):
         return x*scale
 
 class MaxPool2dComplex(nn.Module):
+    ''' 
+    Complex max pooling operation. Keeps the complex number feature with the maximum norm within 
+    the window, keeping both the corresponding real and imaginary components.
+    
+    Args:
+        kernel_size: size of the window
+        stride: stride of the window. Default: kernel_size
+        padding: amount of zero padding. Default: 0
+        dilation: element-wise stride in the window. Default: 1
+        ceil_mode: use ceil instead of floor to compute the output shape. Default: False
+    Shape:
+        Input: [b,2,c,h_in,w_in]
+        Output: [b,2,c,h_out,w_out]
+    '''
     def __init__(
         self,
         kernel_size, 
@@ -60,6 +153,16 @@ class MaxPool2dComplex(nn.Module):
         return torch.stack((x_real, x_imag), dim=1)
 
 class DropoutComplex(nn.Module):
+    '''
+    Complex dropout operation. Randomly zero out both the real and imaginary 
+    components of a complex number feature.
+
+    Args:
+        p: probability of an element being zeroed
+    Shape:
+        Input: [b,2,c,h,w]
+        Output: [b,2,c,h,w] 
+    '''
     def __init__(self, p):
         super(DropoutComplex, self).__init__()
         self.p = p
@@ -80,15 +183,32 @@ class DropoutComplex(nn.Module):
         return torch.stack((x_real, x_imag), dim=1)
 
 class Conv2dComplex(nn.Module):
-    ''' Section 3.2: https://arxiv.org/abs/1705.09792 '''
+    ''' 
+    Complex 2d convolution operation. Implementation the complex convolution from 
+    https://arxiv.org/abs/1705.09792 (Section 3.2) and removes the bias term
+    to preserve phase.
+
+    Args:
+        in_channels: number of channels in the input
+        out_channels: number of channels produced in the output
+        kernel_size: size of convolution window
+        stride: stride of convolution. Default: 1
+        padding: amount of zero padding. Default: 0
+        padding_mode: 'zeros', 'reflect', 'replicate' or 'circular'. Default: 'zeros'
+        groups: number of blocked connections from input to output channels. Default: 1
+    Shape:
+        Input: [b,2,c,h_in,w_in]
+        Output: [b,2,c,h_out,w_out]
+    '''
     def __init__(
         self, 
         in_channels,
         out_channels,
         kernel_size,
         stride=1,
+        padding=0,
+        padding_mode='zeroes',
         groups=1,
-        padding_mode='zeroes'
     ):
         super(Conv2dComplex, self).__init__()
 
@@ -99,8 +219,9 @@ class Conv2dComplex(nn.Module):
             out_channels=out_channels,
             kernel_size=kernel_size,
             stride=stride,
-            groups=groups,
+            padding=padding,
             padding_mode=padding_mode,
+            groups=groups,
             bias=False # Bias always false
         )
         self.conv_imag = nn.Conv2d(
@@ -108,8 +229,9 @@ class Conv2dComplex(nn.Module):
             out_channels=out_channels,
             kernel_size=kernel_size,
             stride=stride,
-            groups=groups,
+            padding=padding,
             padding_mode=padding_mode,
+            groups=groups,
             bias=False # Bias always false
         )
 
@@ -120,19 +242,35 @@ class Conv2dComplex(nn.Module):
         return torch.stack((out_real, out_imag), dim=1)
 
 class BatchNormComplex(nn.BatchNorm2d):
-    ''' Adapted from: https://github.com/ptrblck/pytorch_misc/blob/master/batch_norm_manual.py#L39 '''
+    ''' 
+    Complex batch normalization from Eq. 7. Code adapted from 
+    https://github.com/ptrblck/pytorch_misc/blob/master/batch_norm_manual.py#L39 
+    
+    Args:
+        size: size of a single sample [c,h,w].
+        momentum: exponential averaging momentum term for running mean.
+                  Set to None for simple average. Default: 0.1
+        track_running_stats: track the running mean for evaluation mode. Default: True
+    Shape:
+        Input: [b,2,c,h,w]
+        Output: [b,2,c,h,w]
+    '''
     def __init__(
         self,
-        num_features,
+        size,
         momentum=0.1,
         track_running_stats=True
     ):
         super(BatchNormComplex, self).__init__(
-            num_features=num_features,
+            num_features=size[0],
             momentum=momentum,
             affine=False,
             track_running_stats=track_running_stats
         )
+
+        self.running_mean = torch.zeros(size)
+
+
 
     def forward(self, x):
         # Setup exponential factor
@@ -148,6 +286,8 @@ class BatchNormComplex(nn.BatchNorm2d):
         if self.train:
             mean = x_norm.mean([0])
             with torch.no_grad():
+                print(self.running_mean)
+                print(mean)
                 self.running_mean = ema_factor * mean + (1-ema_factor) * self.running_mean
         else:
             mean = self.running_mean
@@ -156,67 +296,44 @@ class BatchNormComplex(nn.BatchNorm2d):
         x /= torch.sqrt(mean[None, None, :, :, :])
 
         return x
-
-class RealToComplex(nn.Module):
-    def __init__(self, k):
-        super(RealToComplex, self).__init__()
-        self.k = k
-
-    def forward(self, a, b):
-        # Randomly choose theta
-        theta = torch.tensor(np.random.choice(np.linspace(0, 2*np.pi)))
-
-        # Convert to complex and rotate by theta
-        real = a*torch.cos(theta) - b*torch.sin(theta)
-        imag = b*torch.cos(theta) + a*torch.sin(theta)
-        x = torch.stack((real, imag), dim=1)
-
-        return x, theta
-
-class Complex2Real(nn.Module):
-    def __init__(self):
-        super(Complex2Real, self).__init__()
-
-    def forward(self, h, theta):
-        # Apply opposite rotation to decode
-        a, b = get_real_imag_parts(h)
-        y = a*torch.cos(-theta) - b*torch.sin(-theta) # Only need real component
         
-        return y
-
+        
 if __name__ == '__main__':  
-    x = torch.rand((3,2,1,2,1))
-    print(x)
-    #print(x.size())
-
-    #act = ActivationComplex()
-    #y = act(x)
-
-    #pool = MaxPool2dComplex(2, 2)
-    #y = pool(x)
-
-    #drop = DropoutComplex(0.5)
-    #y = drop(x)
-
-    norm = BatchNormComplex(1)
-    y = norm(x)
-    print(y)
-    print(norm.running_mean)
-
-
-    #print(y)
-    #print(y.size())
-
-    '''
-    a = torch.ones(1,1,3,1)*3
-    b = torch.ones(1,1,3,1)*5
-
-    tocomplex = RealToComplex(k=10)
+    # RealToComplex + Complex2Real
+    a = torch.rand(10,5,3,7)
+    b = torch.rand(10,5,3,7)
+    tocomplex = RealToComplex()
     toreal = Complex2Real()
     h, theta = tocomplex(a,b)
     y = toreal(h, theta)
+    assert(h.size()==(10,2,5,3,7))
+    assert(torch.allclose(a,y))
 
-    print(a)
-    print(h)
-    print(y)
-    '''
+    # Activation    
+    x = torch.rand((3,2,3,4,4))
+    act = ActivationComplex()
+    y = act(x)
+    assert(np.all(torch.ge(x,y).numpy()))
+
+    # Max pool
+    x = torch.rand((3,2,3,4,4))
+    pool = MaxPool2dComplex(2, 2)
+    y = pool(x)
+    assert(y.size()==(3,2,3,2,2))
+
+    # Dropout
+    x = torch.rand((3,2,3,4,4))
+    drop = DropoutComplex(0.5)
+    y = drop(x)
+    assert(y.size()==(3,2,3,4,4))
+    assert(0 in y)
+    
+    x = torch.rand((3,2,3,4,4)) 
+    drop.eval()
+    y = drop(x)
+    assert(0 not in y)
+
+    # Normalization
+    x = torch.rand((3,2,3,4,4)) 
+    norm = BatchNormComplex((3,4,4))
+    y = norm(x)
