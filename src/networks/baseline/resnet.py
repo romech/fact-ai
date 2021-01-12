@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
 
 
 class ResidualBlock(nn.Module):
@@ -10,7 +11,8 @@ class ResidualBlock(nn.Module):
         self.channels = channels
 
         self.network = nn.Sequential(
-            nn.Conv2d(channels, channels, kernel_size=3, padding=1, stride=2 if downsample else 1, bias=False),
+            nn.Conv2d(channels // 2 if downsample else channels, channels, kernel_size=3, padding=1,
+                      stride=2 if downsample else 1, bias=False),
             nn.BatchNorm2d(channels),
             nn.ReLU(),
             nn.Conv2d(channels, channels, kernel_size=3, padding=1, stride=1, bias=False),
@@ -19,25 +21,31 @@ class ResidualBlock(nn.Module):
 
     def forward(self, x):
         if self.downsample:
-            out = self.network + F.pad(x[..., ::2, ::2], (0, 0, 0, 0, self.channels // 2, self.channels // 2))
+            out = self.network(x) + F.pad(x[..., ::2, ::2], (0, 0, 0, 0, self.channels // 4, self.channels // 4))
         else:
-            out = self.network + x
+            out = self.network(x) + x
 
         return F.relu(out)
 
 
 class ResNetEncoder(nn.Module):
-    def __init__(self, n, in_nc):
+    def __init__(self, n, additional_layers=False):
         super(ResNetEncoder, self).__init__()
 
         network = [
-            nn.Conv2d(in_nc, 16, kernel_size=3, padding=1, stride=1, bias=False),
+            nn.Conv2d(3, 16, kernel_size=3, padding=1, stride=1, bias=False),
             nn.BatchNorm2d(16),
             nn.ReLU()
         ]
 
         for i in range(n):
             network.append(ResidualBlock(16, False))
+
+        if additional_layers:
+            network += [
+                nn.Conv2d(16, 16, kernel_size=3, padding=1, stride=1),
+                nn.ReLU(True)
+            ]
 
         self.network = nn.Sequential(*network)
 
@@ -79,4 +87,4 @@ class ResNetDecoder(nn.Module):
     def forward(self, x):
         out = self.conv_layers(x)
         out = out.mean([2, 3])          # global average pooling
-        return self.linear(out)
+        return self.linear(torch.flatten(out, 1))
