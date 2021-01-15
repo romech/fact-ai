@@ -9,7 +9,6 @@ from src.dataset import get_datamodule
 
 # Load arguments
 parser = ArgumentParser()
-parser.add_argument( '--experiment_name', type=str, help='Name of experiment.', default='default')
 parser = BaselineModel.add_model_specific_args(parser)
 parser = pl.Trainer.add_argparse_args(parser)
 args = parser.parse_args()

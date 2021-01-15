@@ -9,9 +9,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from collections import OrderedDict
 
-from .networks import load_baseline_network
-
-
+from .networks.baseline import load_baseline_network
 
 class BaselineModel(pl.LightningModule):
     def __init__(
@@ -119,6 +117,7 @@ class BaselineModel(pl.LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        parser.add_argument( '--experiment_name', type=str, help='Name of experiment.', default='default')
         parser.add_argument( '--data_path', type=Path, help='Path to download data.', default='data/')
         parser.add_argument( '--output_path', type=Path, help='Path to save output.', default='output/')
         
@@ -139,5 +138,4 @@ class BaselineModel(pl.LightningModule):
         parser.add_argument('--noisy', action='store_true', help='Add noise to encoder output.')
         parser.add_argument('--gamma', type=float, help='Noise scaling factor.', default=1.0)
 
-  
         return parser

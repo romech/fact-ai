@@ -88,3 +88,34 @@ class ResNetDecoder(nn.Module):
         out = self.conv_layers(x)
         out = out.mean([2, 3])          # global average pooling
         return self.linear(torch.flatten(out, 1))
+
+
+def resnet20(num_classes, additional_layers=False, variant='alpha'):
+    return \
+        ResNetEncoder(3, additional_layers), \
+        ResNetProcessor(3, variant),\
+        ResNetDecoder(3, num_classes, variant)
+
+def resnet32(num_classes, additional_layers=False, variant='alpha'):
+    return \
+        ResNetEncoder(5, additional_layers), \
+        ResNetProcessor(5, variant), \
+        ResNetDecoder(5, num_classes, variant)
+
+def resnet44(num_classes, additional_layers=False, variant='alpha'):
+    return \
+        ResNetEncoder(7, additional_layers), \
+        ResNetProcessor(7, variant), \
+        ResNetDecoder(7, num_classes, variant)
+
+def resnet56(num_classes, additional_layers=False, variant='alpha'):
+    return \
+        ResNetEncoder(9, additional_layers), \
+        ResNetProcessor(9, variant), \
+        ResNetDecoder(9, num_classes, variant)
+
+def resnet110(num_classes, additional_layers=False, variant='alpha'):
+    return \
+        ResNetEncoder(18, additional_layers), \
+        ResNetProcessor(18, variant), \
+        ResNetDecoder(18, num_classes, variant)

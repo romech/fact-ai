@@ -64,3 +64,10 @@ class AlexNetDecoder(nn.Module):
 
     def forward(self, x):
         return self.network(x)
+
+
+def alexnet(num_classes, additional_layers=False):
+    return \
+        AlexNetEncoder(additional_layers), \
+        AlexNetProcessor(), \
+        AlexNetDecoder(num_classes) 

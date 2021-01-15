@@ -78,3 +78,10 @@ class VGGDecoder(nn.Module):
 
     def forward(self, x):
         return self.network(x)
+
+
+def vgg(num_classes, additional_layers=False):
+    return \
+        VGGEncoder(additional_layers), \
+        VGGProcessor(), \
+        VGGDecoder(num_classes)
