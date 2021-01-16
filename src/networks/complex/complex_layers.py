@@ -307,6 +307,40 @@ class BatchNormComplex(nn.Module):
         return x
         
 
+
+
+class Conv2dComplexB(nn.Conv2d):
+    '''
+    Conv2d w/o bias term
+    '''
+    def __init__(
+        self, 
+        in_channels, 
+        out_channels, 
+        kernel_size, 
+        **kwargs
+    ):
+        assert('bias' not in kwargs.keys() or kwargs['bias']==False)
+        super(Conv2dComplexB, self).__init__(
+            in_channels,
+            out_channels,
+            kernel_size,
+            **kwargs, 
+            bias=False
+        )
+
+class Activation(nn.Module):
+    def __init__(self, c=1):
+        super(Activation, self).__init__()
+        assert(c>0)
+        self.c = torch.Tensor([c])
+
+    def forward(self, x):
+        return (torch.abs(x)/torch.maximum(torch.abs(x), self.c)) * x 
+
+
+
+
 if __name__ == '__main__':  
     # RealToComplex + Complex2Real
     for i in range(100):

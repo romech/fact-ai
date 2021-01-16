@@ -49,3 +49,10 @@ class LeNetDecoder(nn.Module):
 
     def forward(self, x):
         return x
+
+
+def lenet(num_classes, additional_layers=False):
+    return \
+        LeNetEncoder(additional_layers), \
+        LeNetProcessor(num_classes), \
+        LeNetDecoder()
