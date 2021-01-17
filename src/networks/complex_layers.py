@@ -55,7 +55,7 @@ class RealToComplex(nn.Module):
 
         return x, theta
 
-class Complex2Real(nn.Module):
+class ComplexToReal(nn.Module):
     '''
     Decodes a complex value tensor h into a real value tensor y by rotating 
     by -theta (Eq. 3). 
@@ -67,7 +67,7 @@ class Complex2Real(nn.Module):
         Output: [b,c,h,w] 
     '''
     def __init__(self):
-        super(Complex2Real, self).__init__()
+        super(ComplexToReal, self).__init__()
 
     def forward(self, h, theta):
         # Apply opposite rotation to decode
@@ -110,6 +110,21 @@ def activation_complex(x, c):
     assert(c>0)
     x_norm = complex_norm(x).unsqueeze(1)
     scale = x_norm/torch.maximum(x_norm, torch.Tensor([c]))
+    return x*scale
+
+def activation_complex_dynamic(x):
+    '''
+    Complex activation function from Eq. 6. This is a functional api to
+    use in networks that don't have a static c value (AlexNet, LeNet, etc.).
+
+    Input:
+        x: Complex number tensor of size [b,2,c,h,w]
+    Output:
+        output tensor of size [b,2,c,h,w]
+    '''
+    x_norm = complex_norm(x)
+    scale = complex_norm(x).unsqueeze(1)/torch.maximum(complex_norm(x).unsqueeze(1),
+                                                       x_norm.mean((2, 3))[:, :, None, None].unsqueeze(1))
     return x*scale
 
 class MaxPool2dComplex(nn.Module):
@@ -278,7 +293,8 @@ class BatchNormComplex(nn.Module):
         self.track_running_stats = track_running_stats
         self.num_batches_tracked = 0
         self.momentum = momentum
-        self.running_mean = torch.zeros(size, requires_grad=False)
+        #self.running_mean = torch.zeros(size, requires_grad=False)
+        self.running_mean = 0
 
     def forward(self, x):
         # Setup exponential factor
@@ -313,7 +329,7 @@ if __name__ == '__main__':
         a = torch.rand(10,5,3,7)
         b = torch.rand(10,5,3,7)
         tocomplex = RealToComplex()
-        toreal = Complex2Real()
+        toreal = ComplexToReal()
         h, theta = tocomplex(a,b)
         y = toreal(h, theta)
         assert(h.size()==(10,2,5,3,7))
