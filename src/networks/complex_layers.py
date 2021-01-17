@@ -293,7 +293,6 @@ class BatchNormComplex(nn.Module):
         self.track_running_stats = track_running_stats
         self.num_batches_tracked = 0
         self.momentum = momentum
-        #self.running_mean = torch.zeros(size, requires_grad=False)
         self.running_mean = 0
 
     def forward(self, x):
@@ -365,8 +364,9 @@ if __name__ == '__main__':
 
     # Normalization
     norm = BatchNormComplex((3,4,4))
+    norm.running_mean = torch.zeros((3,4,4))
     for i in range(100):
-        x = torch.rand((3,2,3,4,4)) 
+        x = torch.rand((3,2,3,4,4))
         mean_before = norm.running_mean
         y = norm(x)
         mean_after = norm.running_mean
