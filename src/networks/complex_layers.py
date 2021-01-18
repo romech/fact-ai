@@ -284,7 +284,6 @@ class BatchNormComplex(nn.Module):
     '''
     def __init__(
         self,
-        size,
         momentum=0.1,
         track_running_stats=True
     ):

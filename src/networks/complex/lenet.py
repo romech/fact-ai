@@ -5,7 +5,6 @@ from ..complex_layers import *
 class LeNetEncoderComplex(LeNetEncoder):
     def __init__(self):
         super(LeNetEncoderComplex, self).__init__(additional_layers=True)
-        self.rotation = RealToComplex()
 
     def forward(self, x):
         return self.network(x)

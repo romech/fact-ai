@@ -12,10 +12,10 @@ class ResidualBlockComplex(nn.Module):
         self.network = nn.Sequential(
             Conv2dComplex(channels // 2 if downsample else channels, channels, kernel_size=3, padding=1,
                           stride=2 if downsample else 1),
-            BatchNormComplex(channels),
+            BatchNormComplex(),
             ActivationComplex(),
             Conv2dComplex(channels, channels, kernel_size=3, padding=1, stride=1),
-            BatchNormComplex(channels)
+            BatchNormComplex()
         )
 
     def forward(self, x):
@@ -30,7 +30,6 @@ class ResidualBlockComplex(nn.Module):
 class ResNetEncoderComplex(ResNetEncoder):
     def __init__(self, n):
         super(ResNetEncoderComplex, self).__init__(n, additional_layers=True)
-        self.rotation = RealToComplex()
 
     def forward(self, x):
         return self.network(x)
