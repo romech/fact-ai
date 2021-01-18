@@ -20,7 +20,10 @@ class BaselineModel(pl.LightningModule):
             resnet_variant='alpha',
             noisy=False,
             gamma=1.0,
+            optimizer='sgd',
             lr=0.1,
+            beta1=0.9,
+            beta2=0.999,
             weight_decay=0.0001,
             momentum=0.9,
             schedule='none',
@@ -44,14 +47,14 @@ class BaselineModel(pl.LightningModule):
     def forward(self, x):
         x = self.encoder(x)
         if self.hparams.noisy:
-            out = self.add_noise(out, self.hparams.gamma)
+            x = self.add_noise(x, self.hparams.gamma)
         x = self.processor(x)
         out = self.decoder(x)
         return out
 
     def add_noise(self, a, gamma):
-        epsilon = torch.randn(a.shape)          # not sure about this one
-        return a + epsilon*gamma
+        epsilon = torch.randn(a.shape, device=self.device) 
+        return a + epsilon*gamma*torch.abs(a)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -96,12 +99,23 @@ class BaselineModel(pl.LightningModule):
             parameters |= set(net.parameters())
 
         # Define optimizer
-        optimizer = torch.optim.SGD(
-            parameters,
-            lr=self.hparams.lr,
-            momentum=self.hparams.momentum,
-            weight_decay=self.hparams.weight_decay, 
-        )
+        if self.hparams.optimizer == 'sgd':
+            print('Using SGD optimizer...')
+            optimizer = torch.optim.SGD(
+                parameters,
+                lr=self.hparams.lr,
+                momentum=self.hparams.momentum,
+                weight_decay=self.hparams.weight_decay, 
+            )
+        elif self.hparams.optimizer == 'adam':
+            print('Using Adam optimizer...')
+            optimizer = torch.optim.Adam(
+                parameters,
+                lr=self.hparams.lr,
+                betas=(self.hparams.beta1, self.hparams.beta2)
+            )
+        else:
+            raise NotImplementedError('{} is not an available optimzer'.format(self.hparams.optimizer))
 
         # Define schedule
         if self.hparams.schedule == 'step':
@@ -124,7 +138,10 @@ class BaselineModel(pl.LightningModule):
         parser.add_argument('--dataset', type=str, help='cifar10 | cifar100 | celeba | cub200', default='cifar10')
         parser.add_argument('--workers', type=int, help='Number of dataloader workers.', default=6)
         parser.add_argument('--batch_size', type=int, help='Number of per batch samples.', default=128)
+        parser.add_argument('--optimizer', type=str, help='sgd | adam', default='sgd')
         parser.add_argument('--lr', type=float, help='Learning rate.', default=0.1)
+        parser.add_argument('--beta1', type=float, help='Adam beta 1 parameter.', default=0.9)
+        parser.add_argument('--beta2', type=float, help='Adam beta 2 parameter.', default=0.999)
         parser.add_argument('--weight_decay', type=float, help='Weight decay.', default=0.0001)
         parser.add_argument('--momentum', type=float, help='SGD momentum.', default=0.9)
         parser.add_argument('--schedule', type=str, help='Learning rate schedule (none | step)', default='none')
