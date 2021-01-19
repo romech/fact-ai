@@ -4,12 +4,12 @@ from pytorch_lightning.loggers import TensorBoardLogger
 import os
 from argparse import ArgumentParser
 
-from src.model_classifier import BaselineModel
+from src.model_classifier import ComplexModel
 from src.dataset import get_datamodule
 
 # Load arguments
 parser = ArgumentParser()
-parser = BaselineModel.add_model_specific_args(parser)
+parser = ComplexModel.add_model_specific_args(parser)
 parser = pl.Trainer.add_argparse_args(parser)
 args = parser.parse_args()
 
@@ -32,13 +32,10 @@ args.num_classes = dm.num_classes
 args.dims = dm.dims
 
 # Load model
-model = BaselineModel(
+model = ComplexModel(
     arch=args.arch,
     num_classes=args.num_classes,
-    additional_layers=args.additional_layers,
     resnet_variant=args.resnet_variant,
-    noisy=args.noisy,
-    gamma=args.gamma,
     optimizer=args.optimizer,
     lr=args.lr,
     beta1=args.beta1,
@@ -47,7 +44,8 @@ model = BaselineModel(
     momentum=args.momentum,
     schedule=args.schedule,
     steps=args.steps,
-    step_factor=args.step_factor
+    step_factor=args.step_factor,
+    k=args.k
 )
 
 # Run trainer

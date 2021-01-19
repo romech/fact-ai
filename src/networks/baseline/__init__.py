@@ -10,6 +10,7 @@ def load_baseline_network(arch, num_classes, resnet_variant='alpha', additional_
         if additional_layers: print('\tUsing additional layers')
     elif arch in ['vgg', 'alexnet', 'lenet']:
         print(f'Initializing {arch} network...')
+        if additional_layers: print('\tUsing additional layers')
     else:
         raise NotImplementedError(f'{arch} is not an available network architecture.')
 
