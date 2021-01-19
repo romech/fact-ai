@@ -118,13 +118,20 @@ def activation_complex_dynamic(x):
     use in networks that don't have a static c value (AlexNet, LeNet, etc.).
 
     Input:
-        x: Complex number tensor of size [b,2,c,h,w]
+        x: Complex number tensor of size [b,2,c,h,w] or [b,2,f]
     Output:
-        output tensor of size [b,2,c,h,w]
+        output tensor of size [b,2,c,h,w] or [b,2,f]
     '''
     x_norm = complex_norm(x)
-    scale = complex_norm(x).unsqueeze(1)/torch.maximum(complex_norm(x).unsqueeze(1),
-                                                       x_norm.mean((2, 3))[:, :, None, None].unsqueeze(1))
+    if x.dim() == 5:
+        # for [b,2,c,h,w] inputs
+        scale = x_norm.unsqueeze(1)/torch.maximum(x_norm.unsqueeze(1),
+                                                  x_norm.mean((2, 3))[:, :, None, None].unsqueeze(1))
+    else:
+        # for [b,2,f] inputs
+        scale = x_norm.unsqueeze(1)/torch.maximum(x_norm.unsqueeze(1),
+                                                  x_norm.mean(1)[:, None, None])
+
     return x*scale
 
 class MaxPool2dComplex(nn.Module):
@@ -208,6 +215,30 @@ class DropoutComplex(nn.Module):
             x_imag *= mask
 
         return torch.stack((x_real, x_imag), dim=1)
+
+
+class LinearComplex(nn.Module):
+    '''
+    Complex linear layer. The bias term is removed in order to leave the phase invariant.
+
+    Args:
+        in_features: number of features of the input
+        out_features: number of channels of the produced output
+    Shape:
+        Input: [b,2,in_features]
+        Output: [b,2,out_features]
+    '''
+    def __init__(self, in_features, out_features):
+        super(LinearComplex, self).__init__()
+
+        self.linear_real = nn.Linear(in_features, out_features, bias=False)
+        self.linear_imag = nn.Linear(in_features, out_features, bias=False)
+
+    def forward(self, x):
+        x_real, x_imag = get_real_imag_parts(x)
+        out_real = self.linear_real(x_real) - self.linear_imag(x_imag)
+        out_imag = self.linear_real(x_imag) + self.linear_imag(x_real)
+        return torch.stack((out_real, out_imag), dim=1)
 
 class Conv2dComplex(nn.Module):
     ''' 
@@ -362,7 +393,7 @@ if __name__ == '__main__':
     assert(np.all(torch.eq(x_clone,y).numpy()))
 
     # Normalization
-    norm = BatchNormComplex((3,4,4))
+    norm = BatchNormComplex()
     norm.running_mean = torch.zeros((3,4,4))
     for i in range(100):
         x = torch.rand((3,2,3,4,4))
@@ -383,3 +414,9 @@ if __name__ == '__main__':
     conv = Conv2dComplex(3, 5, 2, stride=2)
     y = conv(x)
     assert(y.size() == (3,2,5,2,2))
+
+    # Linear
+    x = torch.rand((3,2,50))
+    lin = LinearComplex(50, 100)
+    y = lin(x)
+    assert(y.size() == (3,2,100))
