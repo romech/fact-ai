@@ -1,5 +1,5 @@
 from ..baseline.lenet import *
-from ..complex_layers import *
+from complex_layers import *
 
 
 class LeNetEncoderComplex(LeNetEncoder):

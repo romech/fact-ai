@@ -1,5 +1,5 @@
 from ..baseline.alexnet import *
-from ..complex_layers import *
+from complex_layers import *
 
 
 class AlexNetEncoderComplex(AlexNetEncoder):

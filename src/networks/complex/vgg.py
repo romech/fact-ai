@@ -1,5 +1,5 @@
 from ..baseline.vgg import *
-from ..complex_layers import *
+from complex_layers import *
 
 
 class VGGEncoderComplex(VGGEncoder):

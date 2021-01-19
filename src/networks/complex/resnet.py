@@ -1,5 +1,5 @@
 from ..baseline.resnet import *
-from ..complex_layers import *
+from complex_layers import *
 
 
 class ResidualBlockComplex(nn.Module):
