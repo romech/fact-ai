@@ -71,8 +71,10 @@ class VGGDecoder(nn.Module):
             nn.Flatten(),
             nn.Linear(512*7*7, 4096),
             nn.ReLU(True),
+            nn.Dropout(),
             nn.Linear(4096, 4096),
             nn.ReLU(True),
+            nn.Dropout(),
             nn.Linear(4096, num_classes)
         )
 
