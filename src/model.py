@@ -53,8 +53,8 @@ class BaselineModel(pl.LightningModule):
         return out
 
     def add_noise(self, a, gamma):
-        epsilon = torch.randn(a.shape, device=self.device) 
-        return a + epsilon*gamma*torch.abs(a)
+        epsilon = torch.normal(a, torch.ones(a.shape))
+        return a + epsilon*gamma
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -146,7 +146,8 @@ class BaselineModel(pl.LightningModule):
         parser.add_argument('--momentum', type=float, help='SGD momentum.', default=0.9)
         parser.add_argument('--schedule', type=str, help='Learning rate schedule (none | step)', default='none')
         parser.add_argument('--steps', nargs='+', type=int, help='Epochs where LR is reduced in step schedule.', default=[100,150] )
-        parser.add_argument('--step_factor', type=float, help='Step reduction rate in step schedule .', default=0.1)
+        parser.add_argument('--step_factor', type=float, help='Step reduction rate in step schedule.', default=0.1)
+        parser.add_argument('--seed', type=int, help='Seed to allow for reproducible results.', default=0)
         
         parser.add_argument('--arch', type=str, default='resnet20',
             help='Network architecture (resnet20 | resnet32 | resnet44 | resnet56 | resnet110 | lenet | alexnet | vgg)', )
