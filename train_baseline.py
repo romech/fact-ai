@@ -58,6 +58,7 @@ trainer = pl.Trainer.from_argparse_args(
     checkpoint_callback=checkpoint_callback,
     logger=[tb_logger],
 )
+trainer.logger._default_hp_metric =None
 
 trainer.tune(model, dm)
 trainer.fit(model, dm)

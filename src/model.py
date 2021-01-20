@@ -53,7 +53,7 @@ class BaselineModel(pl.LightningModule):
         return out
 
     def add_noise(self, a, gamma):
-        epsilon = torch.normal(a, torch.ones(a.shape))
+        epsilon = torch.normal(a, torch.ones(a.shape, device=a.device))
         return a + epsilon*gamma
 
     def training_step(self, batch, batch_idx):
