@@ -33,6 +33,8 @@ dm = get_datamodule(args)
 args.num_classes = dm.num_classes
 args.dims = dm.dims
 
+pl.seed_everything(args.seed)
+
 # Load model
 model = BaselineModel(
     arch=args.arch,

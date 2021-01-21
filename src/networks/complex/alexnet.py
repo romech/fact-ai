@@ -36,3 +36,4 @@ def alexnetcomplex(num_classes):
         AlexNetEncoderComplex(), \
         AlexNetProcessorComplex(), \
         AlexNetDecoderComplex(num_classes) 
+
