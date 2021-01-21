@@ -123,7 +123,7 @@ class CUB200DataModule(pl.LightningDataModule):
         self.data_path = data_path
         self.workers = workers
 
-        self.dims = (3, 256, 256)
+        self.dims = (3, 224, 224)
         self.num_classes = 200
         
         self.train_transforms = transforms.Compose([
@@ -221,6 +221,7 @@ class CUB200Dataset(Dataset):
 
         # Could not get pytorch native google drive downloader working
         # so we curl the link instead
+        print('Downloading data...')
         self.download_file_from_google_drive(self.file_id, os.path.join(self.root, self.filename))
         
         with tarfile.open(os.path.join(self.root, self.filename), "r:gz") as tar:
