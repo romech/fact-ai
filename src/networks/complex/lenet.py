@@ -33,7 +33,6 @@ class LeNetProcessorComplex(nn.Module):
 class LeNetDecoderComplex(LeNetDecoder):
     def __init__(self):
         super(LeNetDecoderComplex, self).__init__()
-<<<<<<< HEAD
 
 
 def lenetcomplex(num_classes):
@@ -41,5 +40,3 @@ def lenetcomplex(num_classes):
         LeNetEncoderComplex(), \
         LeNetProcessorComplex(num_classes), \
         LeNetDecoderComplex()
-=======
->>>>>>> 34ab67de35ddcd6ddd3049d781f77e4c817eab35
