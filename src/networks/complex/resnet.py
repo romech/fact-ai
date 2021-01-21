@@ -57,16 +57,11 @@ class ResNetProcessorComplex(nn.Module):
 class ResNetDecoderComplex(ResNetDecoder):
     def __init__(self, n, num_classes, variant="alpha"):
         super(ResNetDecoderComplex, self).__init__(n, num_classes, variant)
-<<<<<<< HEAD
-=======
-        self.rotation = ComplexToReal()
->>>>>>> 34ab67de35ddcd6ddd3049d781f77e4c817eab35
 
     def forward(self, x):
         out = self.conv_layers(x)
         out = out.mean([2, 3])          # global average pooling
         return self.linear(torch.flatten(out, 1))
-<<<<<<< HEAD
 
 
 def resnet20complex(num_classes, variant='alpha'):
@@ -98,6 +93,3 @@ def resnet110complex(num_classes, additional_layers=False, variant='alpha'):
         ResNetEncoderComplex(18), \
         ResNetProcessorComplex(18, variant), \
         ResNetDecoderComplex(18, num_classes, variant)
-
-=======
->>>>>>> 34ab67de35ddcd6ddd3049d781f77e4c817eab35
