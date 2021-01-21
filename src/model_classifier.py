@@ -50,8 +50,6 @@ class BaselineModel(pl.LightningModule):
 
     def forward(self, x):
         x = self.encoder(x)
-        print(x.size())
-        exit()
         if self.hparams.noisy:
             x = self.add_noise(x, self.hparams.gamma)
         x = self.processor(x)
