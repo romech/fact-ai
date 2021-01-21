@@ -25,7 +25,10 @@ def complex_norm(x):
         tensor of norm values of size [b,c,h,w]
     '''
     assert(x.size(1) == 2) # Complex tensor has real and imaginary components in 2nd dim
-    return torch.sqrt(x[:,0]**2 + x[:,1]**2)
+    x_real, x_imag = get_real_imag_parts(x)
+    x_real = x_real.clone()
+    x_imag = x_imag.clone()
+    return torch.sqrt(torch.pow(x_real, 2) + torch.pow(x_imag, 2) + 1e-5)
 
 class RealToComplex(nn.Module):
     '''
@@ -282,69 +285,38 @@ class BatchNormComplex(nn.Module):
         self.running_mean = 0
 
     def forward(self, x):
-        # Setup exponential factor
-        ema_factor = 0.0
-        if self.training and self.track_running_stats:
-            if self.num_batches_tracked is not None:
-                self.num_batches_tracked += 1
-                if self.momentum is None:
-                    ema_factor = 1.0/float(self.num_batches_tracked) # cumulative moving average
-                else:
-                    ema_factor = self.momentum
-
-
-        # Calculate mean of complex norm
-        if self.training:
+        if self.track_running_stats == False:
+            # Calculate mean of complex norm
             x_norm = torch.pow(complex_norm(x), 2)
             mean = x_norm.mean([0])
-            with torch.no_grad():
-                self.running_mean = ema_factor * mean + (1-ema_factor) * self.running_mean
         else:
-            if type(self.running_mean) == int:
-                mean = x.new(x.size(2), x.size(3), x.size(4))*0
+            # Setup exponential factor
+            ema_factor = 0.0
+            if self.training and self.track_running_stats:
+                if self.num_batches_tracked is not None:
+                    self.num_batches_tracked += 1
+                    if self.momentum is None:
+                        ema_factor = 1.0/float(self.num_batches_tracked) # Cumulative moving average
+                    else:
+                        ema_factor = self.momentum
+
+            # Calculate mean of complex norm
+            if self.training :
+                x_norm = torch.pow(complex_norm(x), 2)
+                mean = x_norm.mean([0])
+                with torch.no_grad():
+                    self.running_mean = ema_factor * mean + (1-ema_factor) * self.running_mean
             else:
-                mean = self.running_mean
+                if type(self.running_mean) == int:
+                    mean = x.new(x.size(2), x.size(3), x.size(4))*0
+                else:
+                    mean = self.running_mean
 
         # Normalize
-        x /= torch.sqrt(mean[None, None, :, :, :])
-
+        x /= torch.sqrt(mean[None, None, :, :, :] + 1e-5)
         return x
         
-
-
-
-class Conv2dComplexB(nn.Conv2d):
-    '''
-    Conv2d w/o bias term
-    '''
-    def __init__(
-        self, 
-        in_channels, 
-        out_channels, 
-        kernel_size, 
-        **kwargs
-    ):
-        assert('bias' not in kwargs.keys() or kwargs['bias']==False)
-        super(Conv2dComplexB, self).__init__(
-            in_channels,
-            out_channels,
-            kernel_size,
-            **kwargs, 
-            bias=False
-        )
-
-class Activation(nn.Module):
-    def __init__(self, c=1):
-        super(Activation, self).__init__()
-        assert(c>0)
-        self.c = torch.Tensor([c])
-
-    def forward(self, x):
-        return (torch.abs(x)/torch.maximum(torch.abs(x), self.c)) * x 
-
-
-
-
+        
 if __name__ == '__main__':  
     # RealToComplex + Complex2Real
     for i in range(100):

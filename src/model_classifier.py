@@ -212,8 +212,9 @@ class ComplexModel(pl.LightningModule):
         a = self.encoder(inp)
 
         # Shuffle batch elements of a to create b
-        indices = np.random.permutation(a.size(0))
-        b = a[indices]
+        with torch.no_grad():
+            indices = np.random.permutation(a.size(0))
+            b = a[indices]
 
         # Convert to complex and pass through processor
         x, theta = self.real_to_complex(a, b)
@@ -245,11 +246,11 @@ class ComplexModel(pl.LightningModule):
             # Get discriminator score  
             score_fake += self.discriminator(a_rotated)
 
-        score_fake /= self.hparams.k
+        score_fake /= self.hparams.k # Average score
 
         # Generator step
         if optimizer_idx == 0:
-            # Pass real features through discriminator and get adversarial loss
+            # Get adversarial loss on rotated features
             g_loss_adv = -torch.mean(score_fake)
 
             # Calculate classification cross entropy loss and accuracy
@@ -261,14 +262,15 @@ class ComplexModel(pl.LightningModule):
             self.log('train_loss_ce', g_loss_ce, prog_bar=True)
             self.log('train_acc', acc)
 
-            return g_loss_ce
+            return g_loss_ce+g_loss_adv
 
         # Discriminator step
         if optimizer_idx == 1:
-            # Clip weights of discriminator
+            # Clip discriminator weights
             for p in self.discriminator.parameters():
                 p.data.clamp_(-0.01, 0.01)
             
+            # Get adversarial loss on rotated and unrotated features
             d_loss_adv = -torch.mean(self.discriminator(a)) + torch.mean(score_fake)
             self.log('train_loss_adv_d', d_loss_adv, prog_bar=True)
 
