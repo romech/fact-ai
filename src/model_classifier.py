@@ -11,9 +11,8 @@ from collections import OrderedDict
 import numpy as np
 
 from .networks.baseline import load_baseline_network
-from .networks.complex import load_complex_network
-from .networks.complex.complex_layers import RealToComplex, ComplexToReal
-from .networks.complex.discriminator import Discriminator
+from .networks.complex import load_complex_network, RealToComplex, ComplexToReal, Discriminator
+from .utils import get_encoder_output_size
 
 
 class BaselineModel(pl.LightningModule):
@@ -51,6 +50,8 @@ class BaselineModel(pl.LightningModule):
 
     def forward(self, x):
         x = self.encoder(x)
+        print(x.size())
+        exit()
         if self.hparams.noisy:
             x = self.add_noise(x, self.hparams.gamma)
         x = self.processor(x)
@@ -58,8 +59,8 @@ class BaselineModel(pl.LightningModule):
         return out
 
     def add_noise(self, a, gamma):
-        epsilon = torch.randn(a.shape, device=self.device) 
-        return a + epsilon*gamma*torch.abs(a)
+        epsilon = torch.normal(a, torch.ones(a.shape, device=a.device))
+        return a + epsilon*gamma
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -139,6 +140,7 @@ class BaselineModel(pl.LightningModule):
         parser.add_argument( '--experiment_name', type=str, help='Name of experiment.', default='default')
         parser.add_argument( '--data_path', type=Path, help='Path to download data.', default='data/')
         parser.add_argument( '--output_path', type=Path, help='Path to save output.', default='output/')
+        parser.add_argument('--seed', type=int, help='Seed to allow for reproducible results.', default=0)
         
         parser.add_argument('--dataset', type=str, help='cifar10 | cifar100 | celeba | cub200', default='cifar10')
         parser.add_argument('--workers', type=int, help='Number of dataloader workers.', default=6)
@@ -162,25 +164,15 @@ class BaselineModel(pl.LightningModule):
 
         return parser
 
-encoder_size = {
-    'resnet20': (16,32,32),
-    'resnet32': (16,32,32),
-    'resnet44': (16,32,32),
-    'resnet56': (16,32,32),
-    'resnet110': (16,32,32),
-    'lenet': 6,
-    'alexnet': 384,
-    'vgg': 256
-}
-
 class ComplexModel(pl.LightningModule):
     def __init__(
             self, 
             arch,
             num_classes,
+            dims,
             resnet_variant='alpha',
-            optimizer='sgd',
-            lr=0.1,
+            optimizer='adam',
+            lr=0.001,
             beta1=0.9,
             beta2=0.999,
             weight_decay=0.0001,
@@ -200,7 +192,8 @@ class ComplexModel(pl.LightningModule):
         )
         self.real_to_complex = RealToComplex()
         self.complex_to_real = ComplexToReal()
-        self.discriminator = Discriminator(size=encoder_size[arch])
+        size = get_encoder_output_size(self.encoder, dims)
+        self.discriminator = Discriminator(size=size)
 
         self.train_acc = Accuracy()
         self.val_acc = Accuracy()
@@ -357,19 +350,21 @@ class ComplexModel(pl.LightningModule):
         parser.add_argument( '--experiment_name', type=str, help='Name of experiment.', default='default')
         parser.add_argument( '--data_path', type=Path, help='Path to download data.', default='data/')
         parser.add_argument( '--output_path', type=Path, help='Path to save output.', default='output/')
+        parser.add_argument('--seed', type=int, help='Seed to allow for reproducible results.', default=0)
         
         parser.add_argument('--dataset', type=str, help='cifar10 | cifar100 | celeba | cub200', default='cifar10')
         parser.add_argument('--workers', type=int, help='Number of dataloader workers.', default=6)
         parser.add_argument('--batch_size', type=int, help='Number of per batch samples.', default=128)
-        parser.add_argument('--optimizer', type=str, help='sgd | adam', default='sgd')
-        parser.add_argument('--lr', type=float, help='Learning rate.', default=0.1)
+        parser.add_argument('--optimizer', type=str, help='sgd | adam', default='adam')
+        parser.add_argument('--lr', type=float, help='Learning rate.', default=0.001)
         parser.add_argument('--beta1', type=float, help='Adam beta 1 parameter.', default=0.9)
         parser.add_argument('--beta2', type=float, help='Adam beta 2 parameter.', default=0.999)
         parser.add_argument('--weight_decay', type=float, help='Weight decay.', default=0.0001)
         parser.add_argument('--momentum', type=float, help='SGD momentum.', default=0.9)
         parser.add_argument('--schedule', type=str, help='Learning rate schedule (none | step)', default='none')
-        parser.add_argument('--steps', nargs='+', type=int, help='Epochs where LR is reduced in step schedule.', default=[100,150] )
-        parser.add_argument('--step_factor', type=float, help='Step reduction rate in step schedule .', default=0.1)
+        parser.add_argument('--steps', nargs='+', type=int, default=[100,150],
+            help='Epochs where LR is reduced during step schedule. (Space separated list of integers)')
+        parser.add_argument('--step_factor', type=float, help='Step reduction rate during step schedule.', default=0.1)
         
         parser.add_argument('--arch', type=str, default='resnet20',
             help='Network architecture (resnet20 | resnet32 | resnet44 | resnet56 | resnet110 | lenet | alexnet | vgg)', )

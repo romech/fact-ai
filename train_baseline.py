@@ -13,6 +13,8 @@ parser = BaselineModel.add_model_specific_args(parser)
 parser = pl.Trainer.add_argparse_args(parser)
 args = parser.parse_args()
 
+pl.seed_everything(args.seed)
+
 # Define callbacks
 tb_logger = TensorBoardLogger(
     save_dir=args.output_path,
@@ -56,6 +58,7 @@ trainer = pl.Trainer.from_argparse_args(
     checkpoint_callback=checkpoint_callback,
     logger=[tb_logger],
 )
+trainer.logger._default_hp_metric = None
 
 trainer.tune(model, dm)
 trainer.fit(model, dm)

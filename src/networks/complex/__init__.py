@@ -1,4 +1,9 @@
 from .resnet import resnet20complex, resnet32complex, resnet44complex, resnet56complex, resnet110complex
+from .alexnet import alexnetcomplex
+from .vgg import vggcomplex
+from .lenet import lenetcomplex
+from .discriminator import Discriminator
+from .complex_layers import RealToComplex, ComplexToReal
 
 def load_complex_network(arch, num_classes, resnet_variant='alpha'):
     # Verbose

@@ -117,6 +117,28 @@ def activation_complex(x, c):
     scale = x_norm/torch.maximum(x_norm, c)
     return x*scale
 
+def activation_complex_dynamic(x):
+    '''
+    Complex activation function from Eq. 6. This is a functional api to
+    use in networks that don't have a static c value (AlexNet, LeNet, etc.).
+
+    Input:
+        x: Complex number tensor of size [b,2,c,h,w] or [b,2,f]
+    Output:
+        output tensor of size [b,2,c,h,w] or [b,2,f]
+    '''
+    x_norm = complex_norm(x)
+    if x.dim() == 5:
+        # for [b,2,c,h,w] inputs
+        scale = x_norm.unsqueeze(1)/torch.maximum(x_norm.unsqueeze(1),
+                                                  x_norm.mean((2, 3))[:, :, None, None].unsqueeze(1))
+    else:
+        # for [b,2,f] inputs
+        scale = x_norm.unsqueeze(1)/torch.maximum(x_norm.unsqueeze(1),
+                                                  x_norm.mean(1)[:, None, None])
+
+    return x*scale
+
 class MaxPool2dComplex(nn.Module):
     ''' 
     Complex max pooling operation. Keeps the complex number feature with the maximum norm within 
@@ -256,6 +278,29 @@ class Conv2dComplex(nn.Module):
         x_real, x_imag = get_real_imag_parts(x)
         out_real = self.conv_real(x_real) - self.conv_imag(x_imag)
         out_imag = self.conv_real(x_imag) + self.conv_imag(x_real)
+        return torch.stack((out_real, out_imag), dim=1)
+
+class LinearComplex(nn.Module):
+    '''
+    Complex linear layer. The bias term is removed in order to leave the phase invariant.
+
+    Args:
+        in_features: number of features of the input
+        out_features: number of channels of the produced output
+    Shape:
+        Input: [b,2,in_features]
+        Output: [b,2,out_features]
+    '''
+    def __init__(self, in_features, out_features):
+        super(LinearComplex, self).__init__()
+
+        self.linear_real = nn.Linear(in_features, out_features, bias=False)
+        self.linear_imag = nn.Linear(in_features, out_features, bias=False)
+
+    def forward(self, x):
+        x_real, x_imag = get_real_imag_parts(x)
+        out_real = self.linear_real(x_real) - self.linear_imag(x_imag)
+        out_imag = self.linear_real(x_imag) + self.linear_imag(x_real)
         return torch.stack((out_real, out_imag), dim=1)
 
 class BatchNormComplex(nn.Module):
