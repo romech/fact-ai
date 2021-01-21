@@ -41,12 +41,9 @@ class VGGDecoderComplex(VGGDecoder):
 
     def forward(self, x):
         return self.network(x)
-<<<<<<< HEAD
 
 def vggcomplex(num_classes):
     return \
         VGGEncoderComplex(), \
         VGGProcessorComplex(), \
         VGGDecoderComplex(num_classes)
-=======
->>>>>>> 34ab67de35ddcd6ddd3049d781f77e4c817eab35
