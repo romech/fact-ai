@@ -71,7 +71,6 @@ class BaselineModel(pl.LightningModule):
         acc = self.train_acc(pred, y)
         self.log('train_loss', loss)
         self.log('train_acc', acc)
-
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -95,6 +94,18 @@ class BaselineModel(pl.LightningModule):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         avg_acc = torch.stack([x['val_acc'] for x in outputs]).mean()
         print(f'Validation Loss: {avg_loss} Validation Accuracy: {avg_acc}')
+
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+
+        # Pass through model
+        pred = self(x)
+
+        # Calculate loss and accuracy
+        loss = F.cross_entropy(pred, y)
+        acc = self.val_acc(pred, y)
+        self.log('test_loss', loss)
+        self.log('test_acc', acc)
 
     def configure_optimizers(self):
         # Combine params of network parts together
@@ -188,6 +199,7 @@ class ComplexModel(pl.LightningModule):
             num_classes,
             resnet_variant,
         )
+
         self.real_to_complex = RealToComplex()
         self.complex_to_real = ComplexToReal()
         size = get_encoder_output_size(self.encoder, dims)
@@ -288,6 +300,18 @@ class ComplexModel(pl.LightningModule):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         avg_acc = torch.stack([x['val_acc'] for x in outputs]).mean()
         print(f'Validation Loss: {avg_loss} Validation Accuracy: {avg_acc}')
+
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+
+        # Pass through model
+        pred, _ = self(x)
+
+        # Calculate loss and accuracy
+        loss = F.cross_entropy(pred, y)
+        acc = self.val_acc(pred, y)
+        self.log('test_loss', loss)
+        self.log('test_acc', acc)
 
     def configure_optimizers(self):
         # Combine params of network parts together

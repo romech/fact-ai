@@ -243,7 +243,6 @@ class DropoutComplex(nn.Module):
 
         return torch.stack((x_real, x_imag), dim=1)
 
-
 class LinearComplex(nn.Module):
     '''
     Complex linear layer. The bias term is removed in order to leave the phase invariant.
@@ -326,29 +325,6 @@ class Conv2dComplex(nn.Module):
         out_imag = self.conv_real(x_imag) + self.conv_imag(x_real)
         return torch.stack((out_real, out_imag), dim=1)
 
-class LinearComplex(nn.Module):
-    '''
-    Complex linear layer. The bias term is removed in order to leave the phase invariant.
-
-    Args:
-        in_features: number of features of the input
-        out_features: number of channels of the produced output
-    Shape:
-        Input: [b,2,in_features]
-        Output: [b,2,out_features]
-    '''
-    def __init__(self, in_features, out_features):
-        super(LinearComplex, self).__init__()
-
-        self.linear_real = nn.Linear(in_features, out_features, bias=False)
-        self.linear_imag = nn.Linear(in_features, out_features, bias=False)
-
-    def forward(self, x):
-        x_real, x_imag = get_real_imag_parts(x)
-        out_real = self.linear_real(x_real) - self.linear_imag(x_imag)
-        out_imag = self.linear_real(x_imag) + self.linear_imag(x_real)
-        return torch.stack((out_real, out_imag), dim=1)
-
 class BatchNormComplex(nn.Module):
     ''' 
     Complex batch normalization from Eq. 7. Code adapted from 
@@ -366,7 +342,7 @@ class BatchNormComplex(nn.Module):
     def __init__(
         self,
         momentum=0.1,
-        track_running_stats=True
+        track_running_stats=False
     ):
         super(BatchNormComplex, self).__init__()
 
