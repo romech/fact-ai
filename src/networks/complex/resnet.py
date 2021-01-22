@@ -58,6 +58,11 @@ class ResNetDecoderComplex(ResNetDecoder):
     def __init__(self, n, num_classes, variant="alpha"):
         super(ResNetDecoderComplex, self).__init__(n, num_classes, variant)
 
+    def forward(self, x):
+        out = self.conv_layers(x)
+        out = out.mean([2, 3])          # global average pooling
+        return self.linear(torch.flatten(out, 1))
+
 
 def resnet20complex(num_classes, variant='alpha'):
     return \

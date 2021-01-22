@@ -9,6 +9,7 @@ from torchvision.utils import save_image, make_grid
 from argparse import ArgumentParser
 from pathlib import Path
 from collections import OrderedDict
+import numpy as np
 
 from src.networks.baseline import load_baseline_network
 from src.networks.complex import load_complex_network, RealToComplex
@@ -58,6 +59,7 @@ class ComplexNetwork(pl.LightningModule):
         # Load pretrained checkpoint
         model_ckpt = torch.load(checkpoint_path)
         state_dict = {k[k.find('.')+1:]: v for k, v in model_ckpt['state_dict'].items() if 'encoder' in k} # Only need encoder weights
+
         self.hparams = model_ckpt['hyper_parameters']
 
         # Initialize network with pretrained weights
@@ -71,10 +73,14 @@ class ComplexNetwork(pl.LightningModule):
 
     def forward(self, x):
         a = self.encoder(x)
-        x, _ = self.realtocomplex(a)
+
+        with torch.no_grad():
+            indices = np.random.permutation(a.size(0))
+            b = a[indices]
+
+        x, _ = self.realtocomplex(a,b)
         out = x[:,0] # Drop imaginary part
-        print(out.size())
-        exit()
+
         return out
 
     def setup(self, device: torch.device):
@@ -88,18 +94,6 @@ class ComplexNetwork(pl.LightningModule):
         destination._metadata = OrderedDict()
         return destination
 
-
-# Number of feature channels ouputted from each network's encoder
-encoder_features = {
-    'resnet20': 16,
-    'resnet32': 16,
-    'resnet44': 16,
-    'resnet56': 16,
-    'resnet110': 16,
-    'lenet': 6,
-    'alexnet': 384,
-    'vgg': 256
-}
 
 class AngleDiscriminator(pl.LightningModule):
     def __init__(
@@ -364,7 +358,6 @@ class Inversion1Model(pl.LightningModule):
 
         return parser
 
-
 class Inversion2Model(pl.LightningModule):
     def __init__(
             self, 
@@ -379,12 +372,15 @@ class Inversion2Model(pl.LightningModule):
         super(Inversion2Model, self).__init__()
         self.save_hyperparameters()
 
-        self.encoder = BaselineNetwork(weights)
+        if complex:
+            self.encoder = ComplexNetwork(weights)
+        else:
+            self.encoder = BaselineNetwork(weights)
         self.encoder.freeze()
         channels = get_encoder_output_size(self.encoder, dims)[0]
         self.inversion_network = UNet(
-            encoder_features[self.encoder.hparams.arch], 
-            dims[1:]
+            in_channels=channels, 
+            size=dims[1:]
         )
 
         self.train_mae = MeanAbsoluteError()
@@ -393,7 +389,7 @@ class Inversion2Model(pl.LightningModule):
         print(self.hparams)
 
     def forward(self, x):
-        feats = self.encoder(x) # Encoder features 
+        feats = self.encoder(x) # Encoder features
         out = self.inversion_network(feats) # Reconstruction of x
         return out
 
