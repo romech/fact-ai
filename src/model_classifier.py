@@ -151,7 +151,8 @@ class BaselineModel(pl.LightningModule):
         parser.add_argument( '--output_path', type=Path, help='Path to save output.', default='output/')
         parser.add_argument('--seed', type=int, help='Seed to allow for reproducible results.', default=0)
         
-        parser.add_argument('--dataset', type=str, help='cifar10 | cifar100 | celeba | cub200', default='cifar10')
+        parser.add_argument('--dataset', type=str, default='cifar10',
+            help='cifar10 | cifar100 | cifar100-super | celeba | cub200')
         parser.add_argument('--workers', type=int, help='Number of dataloader workers.', default=6)
         parser.add_argument('--batch_size', type=int, help='Number of per batch samples.', default=128)
         parser.add_argument('--optimizer', type=str, help='sgd | adam', default='sgd')
@@ -374,7 +375,8 @@ class ComplexModel(pl.LightningModule):
         parser.add_argument( '--output_path', type=Path, help='Path to save output.', default='output/')
         parser.add_argument('--seed', type=int, help='Seed to allow for reproducible results.', default=0)
         
-        parser.add_argument('--dataset', type=str, help='cifar10 | cifar100 | celeba | cub200', default='cifar10')
+        parser.add_argument('--dataset', type=str, default='cifar10',
+            help='cifar10 | cifar100 | cifar100-super | celeba | cub200')
         parser.add_argument('--workers', type=int, help='Number of dataloader workers.', default=6)
         parser.add_argument('--batch_size', type=int, help='Number of per batch samples.', default=128)
         parser.add_argument('--optimizer', type=str, help='sgd | adam', default='adam')
