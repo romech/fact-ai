@@ -11,156 +11,11 @@ from pathlib import Path
 from collections import OrderedDict
 import numpy as np
 
-from src.networks.baseline import load_baseline_network
-from src.networks.complex import load_complex_network, RealToComplex, ComplexToReal
-from src.networks.complex.discriminator import Discriminator
-from src.networks.attack import UNet
-from src.utils import get_encoder_output_size
-import numpy as np
+from .networks.complex import ComplexToReal, Discriminator
+from .networks.attack import UNet
+from .utils import get_encoder_output_size
+from .frozen_models import *
 
-
-class BaselineNetwork(pl.LightningModule):
-    def __init__(self, checkpoint_path):
-        super(BaselineNetwork, self).__init__()
-
-        # Load pretrained checkpoint
-        model_ckpt = torch.load(checkpoint_path)
-        state_dict = {k[k.find('.')+1:]: v for k, v in model_ckpt['state_dict'].items() if 'encoder' in k} # Only need encoder weights
-        self.hparams = model_ckpt['hyper_parameters']
-
-        # Initialize network with pretrained weights
-        self.encoder, _, _ = load_baseline_network(
-            self.hparams['arch'],
-            self.hparams['num_classes'],
-            self.hparams['resnet_variant'],
-            self.hparams['additional_layers']
-        )
-        self.encoder.load_state_dict(state_dict)
-
-    def forward(self, x):
-        return self.encoder(x)
-
-    def setup(self, device: torch.device):
-        self.freeze()
-
-    def train(self, mode: bool):
-        return super().train(False)
-
-    def state_dict(self, destination, prefix, keep_vars):
-        destination = OrderedDict()
-        destination._metadata = OrderedDict()
-        return destination
-
-class ComplexNetwork(pl.LightningModule):
-    def __init__(self, checkpoint_path, drop_imag=True):
-        super(ComplexNetwork, self).__init__()
-        self.drop_imag = drop_imag
-
-        # Load pretrained checkpoint
-        model_ckpt = torch.load(checkpoint_path)
-        state_dict = {k[k.find('.')+1:]: v for k, v in model_ckpt['state_dict'].items() if 'encoder' in k} # Only need encoder weights
-
-        self.hparams = model_ckpt['hyper_parameters']
-
-        # Initialize network with pretrained weights
-        self.encoder, _, _ = load_complex_network(
-            self.hparams['arch'],
-            self.hparams['num_classes'],
-            self.hparams['resnet_variant'],
-        )
-        self.encoder.load_state_dict(state_dict)
-        self.realtocomplex = RealToComplex()
-
-    def forward(self, x):
-        a = self.encoder(x)
-
-        with torch.no_grad():
-            indices = np.random.permutation(a.size(0))
-            b = a[indices]
-
-        x, theta = self.realtocomplex(a,b)
-
-        if self.drop_imag:
-            out = x[:,0] # Drop imaginary part
-        else:
-            out = x
-
-        return out, theta
-
-    def setup(self, device: torch.device):
-        self.freeze()
-
-    def train(self, mode: bool):
-        return super().train(False)
-
-    def state_dict(self, destination, prefix, keep_vars):
-        destination = OrderedDict()
-        destination._metadata = OrderedDict()
-        return destination
-
-
-class AngleDiscriminator(pl.LightningModule):
-    def __init__(self, checkpoint_path, in_size):
-        super(AngleDiscriminator, self).__init__()
-
-        # Load pretrained checkpoint
-        model_ckpt = torch.load(checkpoint_path)
-        state_dict = {k[k.find('.')+1:]: v for k, v in model_ckpt['state_dict'].items()}
-
-        self.hparams = model_ckpt['hyper_parameters']
-
-        # Initialize network with pretrained weights
-        in_size[1] *= 2
-        self.angle_discriminator = Discriminator(in_size[1:])
-        self.angle_discriminator.load_state_dict(state_dict)
-
-    def forward(self, x):
-        pred_theta = self.angle_discriminator(
-            torch.cat([x[:, 0], x[:, 1]], dim=1)).squeeze(1)
-        return pred_theta
-
-    def setup(self, device: torch.device):
-        self.freeze()
-
-    def train(self, mode: bool):
-        return super().train(False)
-
-    def state_dict(self, destination, prefix, keep_vars):
-        destination = OrderedDict()
-        destination._metadata = OrderedDict()
-        return destination
-
-
-
-class InferenceAttack1(pl.LightningModule):
-    def __init__(self, attacker_ckpt, complex=False, prototype_ckpt=None):
-        super(InferenceAttack1, self).__init__()
-
-        self.prototype_net = None
-        self.attacker = BaselineNetwork(attacker_ckpt)
-        self.attacker.freeze()
-
-        if prototype_ckpt and not complex:
-            # for real-valued networks we can use inversion attack 2 (or 1 depending on how we define it)
-            self.prototype_net = Inversion2Model.load_from_checkpoint(prototype_ckpt)
-        elif prototype_ckpt and complex:
-            # for complex networks should use inversion attack 1
-            self.prototype_net = Inversion1Model.load_from_checkpoint(prototype_ckpt)
-
-        self.acc = Accuracy()
-
-    def forward(self, x):
-        if self.prototype_net:
-            x = self.prototype_net(x)
-
-        return self.attacker(x)
-
-    def test_step(self, batch, batch_idx):
-        x, y = batch
-        pred = self(x)
-        acc = self.acc(pred, y)
-
-        self.log("test_acc", acc)
 
 class AngleInversionModel(pl.LightningModule):
     def __init__(self,
@@ -175,7 +30,7 @@ class AngleInversionModel(pl.LightningModule):
         self.save_hyperparameters()
 
         # Load pretrained encoder
-        self.encoder = ComplexNetwork(weights, drop_imag=False)
+        self.encoder = ComplexEncoder(weights, drop_imag=False)
         self.encoder.freeze()
         
         # Initialize attack models
@@ -287,7 +142,7 @@ class FeatureInversionAngleModel(pl.LightningModule):
         self.save_hyperparameters()
 
         # Load pretrained encoder
-        self.encoder = ComplexNetwork(encoder_weights, drop_imag=False)
+        self.encoder = ComplexEncoder(encoder_weights, drop_imag=False)
         self.encoder.freeze()
         self.complex_to_real = ComplexToReal()
 
@@ -417,9 +272,9 @@ class FeatureInversionModel(pl.LightningModule):
         self.save_hyperparameters()
 
         if complex:
-            self.encoder = ComplexNetwork(weights)
+            self.encoder = ComplexEncoder(weights)
         else:
-            self.encoder = BaselineNetwork(weights)
+            self.encoder = BaselineEncoder(weights)
         self.encoder.freeze()
         channels = get_encoder_output_size(self.encoder, dims)[0]
         self.inversion_network = UNet(
