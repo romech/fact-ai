@@ -16,6 +16,8 @@ from .networks.complex import load_complex_network, RealToComplex
 from .networks.attack import UNet
 from .utils import get_encoder_output_size
 
+
+
 class BaselineNetwork(pl.LightningModule):
     def __init__(self, checkpoint_path):
         super(BaselineNetwork, self).__init__()
@@ -35,7 +37,15 @@ class BaselineNetwork(pl.LightningModule):
         self.encoder.load_state_dict(state_dict)
 
     def forward(self, x):
-        return self.encoder(x)
+        x = self.encoder(x)
+        if self.hparams.noisy:
+            x = self.add_noise(x, self.hparams.gamma)
+
+        return x
+
+    def add_noise(self, a, gamma):
+        epsilon = torch.normal(a.mean(0), torch.ones(a.shape[1:], device=a.device)).unsqueeze(0)
+        return a + epsilon*gamma
 
     def setup(self, device: torch.device):
         self.freeze()
@@ -148,7 +158,7 @@ class Inversion2Model(pl.LightningModule):
         pred = self(x)
 
         # Calculate loss and reconstruction error
-        loss = F.mse_loss(pred, x)
+        loss = F.l1_loss(pred, x)
         mae = self.val_mae(pred, x)
         self.log('val_loss', loss)
         self.log('val_mae', mae)
@@ -175,6 +185,7 @@ class Inversion2Model(pl.LightningModule):
         optimizer = torch.optim.Adam(
             self.inversion_network.parameters(),
             lr=self.hparams.lr,
+            betas=(0.5, 0.999)
         )
 
         # Define schedule
