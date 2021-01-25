@@ -38,9 +38,9 @@ tb_logger = TensorBoardLogger(
 )
 
 checkpoint_callback = ModelCheckpoint(
-    filepath=os.path.join(tb_logger.root_dir, 'best-{epoch}-{val_mae:.4f}'),
+    filepath=os.path.join(tb_logger.root_dir, 'best-{epoch}-{val_loss:.4f}'),
     save_top_k=1,
-    monitor='val_mae',
+    monitor='val_loss',
     mode='min',
     save_last=True,
 )
@@ -53,7 +53,7 @@ args.dims = dm.dims
 # Load model
 if args.attack == 'angle_inversion':
     model = AngleInversionModel(
-        weights=args.encoder_weights,
+        encoder_weights=args.encoder_weights,
         lr=args.lr,
         schedule=args.schedule,
         steps=args.steps,
@@ -62,7 +62,7 @@ if args.attack == 'angle_inversion':
     )
 elif args.attack == 'feature_inversion':    
     model = FeatureInversionModel(
-        weights=args.encoder_weights,
+        encoder_weights=args.encoder_weights,
         complex=args.complex,
         lr=args.lr,
         schedule=args.schedule,

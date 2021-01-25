@@ -48,6 +48,7 @@ class BaselineNetwork(pl.LightningModule):
         destination._metadata = OrderedDict()
         return destination
 
+
 class BaselineEncoder(pl.LightningModule):
     def __init__(self, checkpoint_path):
         super(BaselineEncoder, self).__init__()
@@ -66,8 +67,15 @@ class BaselineEncoder(pl.LightningModule):
         )
         self.encoder.load_state_dict(state_dict)
 
+    def add_noise(self, a, gamma):
+        epsilon = torch.normal(a.mean(0), torch.ones(a.shape[1:], device=a.device)).unsqueeze(0)
+        return a + epsilon*gamma
+
     def forward(self, x):
-        return self.encoder(x)
+        x = self.encoder(x)
+        if self.hparams.noisy:
+            x = self.add_noise(x, self.hparams.gamma)
+        return x
 
     def setup(self, device: torch.device):
         self.freeze()
@@ -107,14 +115,9 @@ class ComplexEncoder(pl.LightningModule):
             indices = np.random.permutation(a.size(0))
             b = a[indices]
 
-        x, theta = self.realtocomplex(a,b)
+        x, theta = self.realtocomplex(a, b)
 
-        if self.drop_imag:
-            out = x[:,0] # Drop imaginary part
-        else:
-            out = x
-
-        return out, theta
+        return x, theta
 
     def setup(self, device: torch.device):
         self.freeze()
@@ -171,7 +174,7 @@ class InversionNetwork(pl.LightningModule):
             in_channels=channels,
             out_size=self.hparams.dims[1:]
         )
-        self.inversion_network.load_state_dict(state_dict)
+        self.inversion_network.load_state_dict(state_dict, strict=False)
 
     def forward(self, x):
         return self.inversion_network(x)

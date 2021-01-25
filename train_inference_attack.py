@@ -57,7 +57,8 @@ if args.attack == 'inference1':
         encoder_weights=args.encoder_weights,
         inversion_net_weights=args.inversion_net_weights,
         angle_dis_weights=args.angle_dis_weights,
-        dims=args.dims
+        dims=args.dims,
+        complex=args.complex
     )
 elif args.attack == 'inference2':
     model = InferenceAttack2Model(
@@ -75,7 +76,8 @@ elif args.attack == 'inference2':
         momentum=args.momentum,
         schedule=args.schedule,
         steps=args.steps,
-        step_factor=args.step_factor
+        step_factor=args.step_factor,
+        complex=args.complex
     )
 elif args.attack == 'inference3':
     model = InferenceAttack3Model(
@@ -95,7 +97,8 @@ elif args.attack == 'inference3':
         momentum=args.momentum,
         schedule=args.schedule,
         steps=args.steps,
-        step_factor=args.step_factor
+        step_factor=args.step_factor,
+        complex=args.complex
     )
 
 
