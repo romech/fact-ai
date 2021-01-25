@@ -94,7 +94,7 @@ class InferenceAttack1Model(pl.LightningModule):
         parser.add_argument('--seed', type=int, help='Seed to allow for reproducible results.', default=0)
         parser.add_argument('--classifier_weights', type=Path, help='Path to classification network checkpoint.', required=True)
         parser.add_argument('--inversion_net_weights', type=Path, help='Path to feature inversion network checkpoint.', required=True)
-        parser.add_argument('--angle_dis_weights', type=Path, help='Path to angle discriminator checkpoint.', required=True)
+        parser.add_argument('--angle_dis_weights', type=Path, help='Path to angle discriminator checkpoint.', default=None)
         parser.add_argument('--complex', action='store_true', help='Loading a complex pretrained network?.')
         parser.add_argument('--encoder_weights', type=Path, help='Path to complex encoder checkpoint.', required=True)
         

@@ -13,7 +13,7 @@ parser = pl.Trainer.add_argparse_args(parser)
 
 # Which attack model
 parser.add_argument('--attack', type=str, required=True,
-    help='Name of attack (inference1 | inference2).')
+    help='Name of attack (inference1 | inference2 | inference3).')
 temp_args, _ = parser.parse_known_args()
 
 # Parse args for selected attack
@@ -110,7 +110,7 @@ trainer = pl.Trainer.from_argparse_args(
 )
 trainer.logger._default_hp_metric = None
 
-if not args.test:
+if not args.test and not args.attack == "inference1":
     trainer.tune(model, dm)
     trainer.fit(model, dm)
 else:
