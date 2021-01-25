@@ -174,7 +174,7 @@ class InversionNetwork(pl.LightningModule):
             in_channels=channels,
             out_size=self.hparams.dims[1:]
         )
-        self.inversion_network.load_state_dict(state_dict)
+        self.inversion_network.load_state_dict(state_dict, strict=False)
 
     def forward(self, x):
         return self.inversion_network(x)

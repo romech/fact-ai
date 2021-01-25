@@ -27,6 +27,7 @@ class InferenceAttack1Model(pl.LightningModule):
         angle_dis_weights=None,
     ):
         super(InferenceAttack1Model, self).__init__()
+        self.save_hyperparameters()
 
         # Load classification network
         self.classifier = BaselineNetwork(classifier_weights)
@@ -54,7 +55,7 @@ class InferenceAttack1Model(pl.LightningModule):
 
         self.acc = Accuracy()
 
-        print(self.hparam)
+        print(self.hparams)
 
     def forward(self, x):
         # Reconstruct input
@@ -80,7 +81,7 @@ class InferenceAttack1Model(pl.LightningModule):
 
         # Calculate loss and accuracy
         loss = F.cross_entropy(pred, y)
-        acc = self.val_acc(pred, y)
+        acc = self.acc(pred, y)
         self.log('test_loss', loss)
         self.log('test_acc', acc)
 
@@ -332,11 +333,11 @@ class InferenceAttack3Model(pl.LightningModule):
         # Load pretrained models
         if complex:
             # Load complex encoder
-            self.encoder = ComplexEncoder(encoder_weights)
+            self.protype_encoder = ComplexEncoder(encoder_weights)
         else:
-            self.encoder = BaselineEncoder(encoder_weights)
+            self.protype_encoder = BaselineEncoder(encoder_weights)
 
-        self.encoder.freeze()
+        self.protype_encoder.freeze()
 
         # Feature inversion network
         in_size = get_encoder_output_size(self.protype_encoder, dims)
@@ -367,7 +368,7 @@ class InferenceAttack3Model(pl.LightningModule):
         # Reconstruct encoder features
         with torch.no_grad():
             if self.hparams.complex:
-                feats, _ = self.encoder(x) # Encoder features
+                feats, _ = self.protype_encoder(x) # Encoder features
                 pred_theta = self.angle_discriminator(feats) # Predict angle
                 feats = self.complex_to_real(feats, pred_theta) # Revert to real using predicted angle
             else:
