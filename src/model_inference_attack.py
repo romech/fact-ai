@@ -262,7 +262,7 @@ class InferenceAttack2Model(pl.LightningModule):
 
         new_state_dict = {}
         for k, v in ckpt["state_dict"].items():
-            if "processor" not in k:
+            if "processor." not in k:
                 continue
             new_state_dict[k.replace("processor.", "")] = v
 
@@ -270,7 +270,7 @@ class InferenceAttack2Model(pl.LightningModule):
 
         new_state_dict = {}
         for k, v in ckpt["state_dict"].items():
-            if "decoder" not in k:
+            if "decoder." not in k:
                 continue
             new_state_dict[k.replace("decoder.", "")] = v
 
@@ -473,22 +473,28 @@ class InferenceAttack3Model(pl.LightningModule):
     @staticmethod
     def load_from_checkpoint(path):
         ckpt = torch.load(path)
-        model = InferenceAttack2Model(**ckpt["hyper_parameters"])
+        model = InferenceAttack3Model(**ckpt["hyper_parameters"])
 
         new_state_dict = {}
         for k, v in ckpt["state_dict"].items():
+            if "processor." not in k:
+                continue
             new_state_dict[k.replace("processor.", "")] = v
 
         model.processor.load_state_dict(new_state_dict)
 
         new_state_dict = {}
         for k, v in ckpt["state_dict"].items():
+            if "decoder." not in k:
+                continue
             new_state_dict[k.replace("decoder.", "")] = v
 
         model.decoder.load_state_dict(new_state_dict)
 
         new_state_dict = {}
         for k, v in ckpt["state_dict"].items():
+            if "encoder." not in k:
+                continue
             new_state_dict[k.replace("encoder.", "")] = v
 
         model.encoder.load_state_dict(new_state_dict)
@@ -502,7 +508,7 @@ class InferenceAttack3Model(pl.LightningModule):
         parser.add_argument('--data_path', type=Path, help='Path to download data.', default='data/')
         parser.add_argument('--output_path', type=Path, help='Path to save output.', default='output/')
         parser.add_argument('--seed', type=int, help='Seed to allow for reproducible results.', default=0)
-        parser.add_argument('--angle_dis_weights', type=Path, help='Path to angle discriminator checkpoint.', required=True)
+        parser.add_argument('--angle_dis_weights', type=Path, help='Path to angle discriminator checkpoint.', default=None)
         parser.add_argument('--encoder_weights', type=Path, help='Path to complex encoder checkpoint.', required=True)
         parser.add_argument('--complex', action='store_true', help='Loading a complex pretrained network?.')
         parser.add_argument('--inversion_net_weights', type=Path, help='Path to feature inversion network checkpoint.', required=True)
