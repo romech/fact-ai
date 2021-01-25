@@ -53,7 +53,7 @@ args.dims = dm.dims
 # Load model
 if args.attack == 'angle_inversion':
     model = AngleInversionModel(
-        weights=args.encoder_weights,
+        encoder_weights=args.encoder_weights,
         lr=args.lr,
         schedule=args.schedule,
         steps=args.steps,
@@ -62,7 +62,7 @@ if args.attack == 'angle_inversion':
     )
 elif args.attack == 'feature_inversion':    
     model = FeatureInversionModel(
-        weights=args.encoder_weights,
+        encoder_weights=args.encoder_weights,
         complex=args.complex,
         lr=args.lr,
         schedule=args.schedule,
