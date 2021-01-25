@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class Block(nn.Module):
     ''' 
     Convolution block with 6 convolutions
@@ -16,22 +17,22 @@ class Block(nn.Module):
         super(Block, self).__init__()
 
         self.block = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(True),
         )
@@ -94,15 +95,15 @@ class UNet(nn.Module):
 
     Args:
         in_channels: number of channels in input
-        size: target output size (h,w)
+        out_size: target output size (h,w)
     Shape:
         Input: [b,in_channels,h,w]
         Output: [b,3,size[0],size[1]]
     '''
-    def __init__(self, in_channels, size):
+    def __init__(self, in_channels, out_size):
         super(UNet, self).__init__()
 
-        self.upsample = nn.Upsample(size=size)
+        self.upsample = nn.Upsample(size=out_size)
 
         # Encoder
         self.encoder1 = Block(in_channels, 64)

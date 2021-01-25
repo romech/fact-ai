@@ -6,7 +6,7 @@ class Discriminator(nn.Module):
     Adversarial discriminator network.
 
     Args:
-        size: Tuple of input shape (c,h,w)
+        size: List of input shape [c,h,w]
     Shape:
         Input: [b,c,h,w]
         Output: [b,1]
@@ -26,7 +26,6 @@ class Discriminator(nn.Module):
     def forward(self, x):
         x = self.net(x)
         return x
-
 
 if __name__ == '__main__':
     x = torch.randn((4,4,32,32))

@@ -49,11 +49,13 @@ class RealToComplex(nn.Module):
 
     def forward(self, a, b):
         # Randomly choose theta
-        theta = a.new(1).uniform_(0, 2*np.pi)
+        theta = a.new(a.size(0)).uniform_(0, 2*np.pi)
 
         # Convert to complex and rotate by theta
-        real = a*torch.cos(theta) - b*torch.sin(theta)
-        imag = b*torch.cos(theta) + a*torch.sin(theta)
+        real = a*torch.cos(theta)[:, None, None, None] - \
+               b*torch.sin(theta)[:, None, None, None]
+        imag = b*torch.cos(theta)[:, None, None, None] + \
+               a*torch.sin(theta)[:, None, None, None]
         x = torch.stack((real, imag), dim=1)
 
         return x, theta
@@ -66,7 +68,7 @@ class ComplexToReal(nn.Module):
     Shape:
         Input:
             h: [b,2,c,h,w]
-            theta: [1]
+            theta: [b]
         Output: [b,c,h,w] 
     '''
     def __init__(self):
@@ -75,8 +77,8 @@ class ComplexToReal(nn.Module):
     def forward(self, h, theta):
         # Apply opposite rotation to decode
         a, b = get_real_imag_parts(h)
-        y = a*torch.cos(-theta) - b*torch.sin(-theta) # Only need real component
-        
+        y = a*torch.cos(-theta)[:, None, None, None] - \
+            b*torch.sin(-theta)[:, None, None, None] # Only need real component
         return y
   
 class ActivationComplex(nn.Module):
