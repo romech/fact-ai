@@ -38,9 +38,9 @@ tb_logger = TensorBoardLogger(
 )
 
 checkpoint_callback = ModelCheckpoint(
-    filepath=os.path.join(tb_logger.root_dir, 'best-{epoch}-{val_mae:.4f}'),
+    filepath=os.path.join(tb_logger.root_dir, 'best-{epoch}-{val_loss:.4f}'),
     save_top_k=1,
-    monitor='val_mae',
+    monitor='val_loss',
     mode='min',
     save_last=True,
 )
