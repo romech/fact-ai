@@ -77,8 +77,12 @@ class ComplexToReal(nn.Module):
     def forward(self, h, theta):
         # Apply opposite rotation to decode
         a, b = get_real_imag_parts(h)
-        y = a*torch.cos(-theta)[:, None, None, None] - \
-            b*torch.sin(-theta)[:, None, None, None] # Only need real component
+        if a.dim() == 4:
+            y = a*torch.cos(-theta)[:, None, None, None] - \
+                b*torch.sin(-theta)[:, None, None, None] # Only need real component
+        else:
+            y = a*torch.cos(-theta)[:, None] - \
+            b*torch.sin(-theta)[:, None] # Only need real component
         return y
   
 class ActivationComplex(nn.Module):
