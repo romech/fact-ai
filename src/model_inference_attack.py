@@ -25,6 +25,7 @@ class InferenceAttack1Model(pl.LightningModule):
         dims,
         complex=False,
         angle_dis_weights=None,
+        verbose=False
     ):
         super(InferenceAttack1Model, self).__init__()
         self.save_hyperparameters()
@@ -55,7 +56,8 @@ class InferenceAttack1Model(pl.LightningModule):
 
         self.acc = Accuracy()
 
-        print(self.hparams)
+        if verbose:
+            print(self.hparams)
 
     def forward(self, x):
         # Reconstruct input
@@ -97,6 +99,7 @@ class InferenceAttack1Model(pl.LightningModule):
         parser.add_argument('--angle_dis_weights', type=Path, help='Path to angle discriminator checkpoint.', default=None)
         parser.add_argument('--complex', action='store_true', help='Loading a complex pretrained network?.')
         parser.add_argument('--encoder_weights', type=Path, help='Path to complex encoder checkpoint.', required=True)
+        parser.add_argument('--verbose', action='store_true', help='Whether to print hyperparameters when loading.')
         
         parser.add_argument('--dataset', type=str, help='cifar10 | cifar100 | celeba | cub200', default='cifar10')
         parser.add_argument('--workers', type=int, help='Number of dataloader workers.', default=6)
@@ -376,7 +379,7 @@ class InferenceAttack3Model(pl.LightningModule):
                 pred_theta = self.angle_discriminator(feats) # Predict angle
                 feats = self.complex_to_real(feats, pred_theta) # Revert to real using predicted angle
             else:
-                feats = self.encoder(x)
+                feats = self.protype_encoder(x)
 
             x_pred = self.inversion_network(feats) # Reconstruct x
 
@@ -384,6 +387,7 @@ class InferenceAttack3Model(pl.LightningModule):
         a = self.encoder(x_pred)
         h = self.processor(a)
         out = self.decoder(h)
+
 
         return out
 

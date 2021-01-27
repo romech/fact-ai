@@ -171,8 +171,10 @@ class BaselineModel(pl.LightningModule):
         parser.add_argument('--resnet_variant', type=str, help='alpha | beta', default='alpha')
         parser.add_argument('--noisy', action='store_true', help='Add noise to encoder output.')
         parser.add_argument('--gamma', type=float, help='Noise scaling factor.', default=1.0)
+        parser.add_argument('--save_every_epoch', action='store_true', help='Whether the model should be saved after every epoch.')
 
         return parser
+
 
 class ComplexModel(pl.LightningModule):
     def __init__(

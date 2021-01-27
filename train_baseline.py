@@ -20,13 +20,19 @@ tb_logger = TensorBoardLogger(
     save_dir=args.output_path,
     name=args.experiment_name
 )
-checkpoint_callback = ModelCheckpoint(
-    filepath=os.path.join(tb_logger.root_dir, 'best-{epoch}-{val_acc:.4f}'),
-    save_top_k=1,
-    monitor='val_acc',
-    mode='max',
-    save_last=True,
-)
+if args.save_every_epoch:
+    checkpoint_callback = ModelCheckpoint(
+        filepath=os.path.join(tb_logger.root_dir, '{epoch}-{val_acc:.4f}'),
+        save_top_k=-1
+    )
+else:
+    checkpoint_callback = ModelCheckpoint(
+        filepath=os.path.join(tb_logger.root_dir, 'best-{epoch}-{val_acc:.4f}'),
+        save_top_k=1,
+        monitor='val_acc',
+        mode='max',
+        save_last=True,
+    )
 
 # Load datamodule
 dm = get_datamodule(args)
