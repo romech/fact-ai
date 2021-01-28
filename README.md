@@ -24,6 +24,11 @@ We also publish our **trained models** for most of the reported results:
 Implementation details for complex-valued DNNs, attacks, and our findings are included in the [report](https://api.openreview.net/forum?id=XX26O1HXupp&noteId=rQEKyH2LlHa).
 
 ## Results
+### Feature inversion attacks
+|Original paper   |Our implementation   |
+|-----------------|---------------------|
+|![](assets/attack-original.png)|![](assets/attack-ours.png)|
+
 ### Baseline models – image classification
 |Original paper   |Our implementation   |
 |-----------------|---------------------|
