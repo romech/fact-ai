@@ -1,0 +1,11 @@
+python train_attack.py \
+    --attack feature_inversion \
+    --complex \
+    --gpus 1 \
+    --precision 16 \
+    --encoder_weights <PATH_TO_COMPLEX_NET_CHECKPOINT>  \
+    --max_epochs 15 \
+    --batch_size 128 \ 
+    --optimizer adam \
+    --lr 0.0001 \
+    --dataset cifar10 \
