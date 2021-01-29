@@ -14,11 +14,11 @@ As the authors do not provide training details in their work, we do not aim to o
 - Python 3.6 or greater.
 - Dependencies can be installed by `pip install -r requirements.txt` 
 
-## Usage
-We include shell [scripts](scripts/) with usage examples. For models that require pretrained weights, update the paths found in the script. A [Colab notebook](https://colab.research.google.com/drive/1ZFEJxBh7IpgF-VnmGrUCkZOgsFiyr3fH?usp=sharing) is provided to reproduce are evaluation results. 
-The trained model weights for our reported can be found here: 
-[[1]](https://drive.google.com/drive/folders/1r2ALBrRja0fnRMD1STps96XTIXIY2P3G?usp=sharing) 
-[[2]](https://drive.google.com/file/d/1JF1VrWDQJkDCFvdschQDIPtsH8sAkpS3/view?usp=sharing) 
+## Training
+We include several shell [scripts](scripts/) with examples on how to train the classification models and the various attacker models. 
+
+## Evaluation Notebook
+Our results can be reprduced by running the provided [Jupyter Notebook](results.py). The notebook requires the model checkpoints of our trained models, which can be downloaded [here](https://drive.google.com/file/d/1CjgKd9Hys-fA65JX5TNGTT1ZHKXFN68N/view?usp=sharing). The downloaded zip directory needs to be extracted into the root directory in order for the notebook to work properly.
 
 ## Results
 ### Feature inversion attacks
