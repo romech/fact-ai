@@ -1,0 +1,10 @@
+python train_inversion_attack.py \
+    --attack angle_inversion \
+    --gpus 1 \ 
+    --precision 16 \ 
+    --encoder_weights <PATH_TO_COMPLEX_NET_CHECKPOINT> \
+    --max_epochs 50 \
+    --batch_size 128 \
+    --optimizer adam \
+    --lr 0.0001 \
+    --dataset cifar10 \
