@@ -1,10 +1,10 @@
-python train_inference_attack.py 
+python train_inference_attack.py \
     --attack inference2 \
     --complex \
     --gpus 1 \
     --precision 16 \
-    --angle_dis_weights <PATH_TO_ANGLE_DIS_CHECKPOINT> \
-    --encoder_weights <PATH_TO_COMPLEX_NET_CHECKPOINT>  \
+    --angle_dis_weights output/angle.ckpt \
+    --encoder_weights output/complex.ckpt  \
     --arch resnet56 \
     --dataset cifar10 \
     --batch_size 128 \

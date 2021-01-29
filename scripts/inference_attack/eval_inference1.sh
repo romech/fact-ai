@@ -1,11 +1,11 @@
-python train_inference_attack.py 
+python train_inference_attack.py \
     --attack inference1 \
     --complex \
     --test \
     --gpus 1 \
     --precision 16 \
-    --classifier_weights <PATH_TO_BASELINE_NET_CHECKPOINT> \ 
-    --inversion_net_weights <PATH_TO_INVERSION_NET_CHECKPOINT> \
-    --angle_dis_weights <PATH_TO_ANGLE_DIS_CHECKPOINT> \
-    --encoder_weights <PATH_TO_COMPLEX_NET_CHECKPOINT> \
+    --classifier_weights output/base.ckpt \
+    --inversion_net_weights output/inv.ckpt \
+    --angle_dis_weights output/angle.ckpt \
+    --encoder_weights output/complex.ckpt \
     --dataset cifar10 \
