@@ -167,3 +167,10 @@ mixed_inversion_experiments = {
         "Complex dec(x)": "resnet56_cif100_complex/best-epoch=14-val_loss=0.2143.ckpt"
     }
 }
+
+
+def inverse_normalize(tensor, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
+    tensor = tensor.clone()
+    for t, m, s in zip(tensor, mean, std):
+        t.mul_(s).add_(m)
+        return tensor
