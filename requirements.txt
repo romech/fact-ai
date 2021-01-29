@@ -1,7 +1,7 @@
 pandas==1.2.0
 torchvision==0.8.2
 numpy==1.19.5
-torch==1.7.0
+torch==1.7.1
 pytorch_lightning==1.1.2
 requests==2.25.1
 matplotlib==3.2.1
