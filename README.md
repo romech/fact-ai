@@ -18,7 +18,7 @@ As the authors do not provide training details in their work, we do not aim to o
 We include several shell [scripts](scripts/) with examples on how to train the classification models and the various attacker models. 
 
 ## Evaluation Notebook
-Our results can be reprduced by running the provided [Jupyter Notebook](results.py). The notebook requires the model checkpoints of our trained models, which can be downloaded [here](https://drive.google.com/file/d/1CjgKd9Hys-fA65JX5TNGTT1ZHKXFN68N/view?usp=sharing). The downloaded zip directory needs to be extracted into the root directory in order for the notebook to work properly.
+Our results can be reprduced by running the provided [Jupyter Notebook](results.ipynb). The notebook requires the model checkpoints of our trained models, which can be downloaded [here](https://drive.google.com/file/d/1CjgKd9Hys-fA65JX5TNGTT1ZHKXFN68N/view?usp=sharing). The downloaded zip directory needs to be extracted into the root directory in order for the notebook to work properly.
 
 ## Results
 ### Feature inversion attacks
