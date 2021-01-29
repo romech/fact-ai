@@ -19,26 +19,3 @@ We include several shell [scripts](scripts/) with examples on how to train the c
 
 ## Evaluation Notebook
 Our results can be reprduced by running the provided [Jupyter Notebook](results.ipynb). The notebook requires the model checkpoints of our trained models, which can be downloaded [here](https://drive.google.com/file/d/1CjgKd9Hys-fA65JX5TNGTT1ZHKXFN68N/view?usp=sharing). The downloaded zip directory needs to be extracted into the root directory in order for the notebook to work properly. We use both, the CIFAR-10 and CIFAR-100 dataset in the notebook. Both datasets will be automatically downloaded by PyTorch and don't require any further preparation.
-
-## Results
-### Feature inversion attacks
-|Original paper   |Our implementation   |
-|-----------------|---------------------|
-|![](assets/attack-original.png)|![](assets/attack-ours.png)|
-
-### Baseline models – image classification
-|Original paper   |Our implementation   |
-|-----------------|---------------------|
-|![](assets/classification-errors-original.png)|![](assets/classification-errors-ours.png)|
-
-**Original paper**
-![](assets/classification-errors-2-original.png)
-
-**Our implementation**
-![](assets/classification-errors-2-ours.png)
-
-### Average error of the estimated rotation angle in radian
-|Original paper   |Our implementation   |
-|-----------------|---------------------|
-|![](assets/angle-attack-original.png)|![](assets/angle-attack-ours.png)|
-
